@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="国際政治学の英語学術論文を読む際に、専門用語・イディオムを国際政治学の文脈に沿って和訳するWebアプリケーション">
+    <title>IR Translator — 国際政治学 論文翻訳ツール</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ============ Auth Screen (Login / Register) ============ -->
+    <div class="login-overlay" id="auth-overlay">
+        <div class="login-card">
+            <div class="login-logo">
+                <span class="login-logo-icon">🌐</span>
+                <h1>IR Translator</h1>
+                <p>国際政治学 論文翻訳ツール</p>
+            </div>
+
+            <!-- Auth Tab Toggle -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tab-login" data-tab="login">ログイン</button>
+                <button class="auth-tab" id="tab-register" data-tab="register">新規登録</button>
+            </div>
+
+            <!-- Login Form -->
+            <form class="login-form" id="login-form">
+                <div class="form-group">
+                    <label for="login-user">ユーザー名</label>
+                    <input type="text" id="login-user" placeholder="ユーザー名を入力" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="login-pass">パスワード</label>
+                    <input type="password" id="login-pass" placeholder="パスワードを入力" required
+                        autocomplete="current-password">
+                </div>
+                <div class="auth-error" id="login-error" style="display:none;"></div>
+                <button type="submit" class="btn btn-primary btn-full" id="btn-login">
+                    ログイン
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form class="login-form" id="register-form" style="display:none;">
+                <div class="form-group">
+                    <label for="reg-user">ユーザー名 <span class="required">*</span></label>
+                    <input type="text" id="reg-user" placeholder="英数字3〜20文字" required autocomplete="username"
+                        minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+">
+                </div>
+                <div class="form-group">
+                    <label for="reg-display">表示名</label>
+                    <input type="text" id="reg-display" placeholder="例: 田中太郎（任意）" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">メールアドレス <span class="required">*</span></label>
+                    <input type="email" id="reg-email" placeholder="例: example@university.ac.jp" required
+                        autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="reg-pass">パスワード <span class="required">*</span></label>
+                    <input type="password" id="reg-pass" placeholder="6文字以上" required autocomplete="new-password"
+                        minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="reg-pass-confirm">パスワード（確認） <span class="required">*</span></label>
+                    <input type="password" id="reg-pass-confirm" placeholder="パスワードを再入力" required
+                        autocomplete="new-password" minlength="6">
+                </div>
+                <div class="auth-error" id="register-error" style="display:none;"></div>
+                <div class="auth-success" id="register-success" style="display:none;"></div>
+                <button type="submit" class="btn btn-primary btn-full" id="btn-register">
+                    アカウントを作成
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============ Pending Screen ============ -->
+    <div class="pending-overlay" id="pending-overlay" style="display:none;">
+        <div class="pending-card">
+            <div class="pending-icon">⏳</div>
+            <h2>承認待ち</h2>
+            <p>アカウントの登録申請が完了しました。<br>管理者が承認するまでしばらくお待ちください。</p>
+            <button class="btn btn-ghost" id="btn-pending-logout">ログアウト</button>
+        </div>
+    </div>
+
+    <!-- ============ Main App (hidden until login) ============ -->
+    <div class="app-container" id="app-container" style="display:none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="logo">
+                    <span class="logo-icon">🌐</span>
+                    <h1>IR Translator</h1>
+                    <span class="logo-sub">国際政治学 論文翻訳ツール</span>
+                </div>
+                <nav class="header-nav">
+                    <button class="nav-btn active" data-view="translator" id="nav-translator">
+                        <span class="nav-icon">📄</span><span class="nav-label"> 翻訳</span>
+                    </button>
+                    <button class="nav-btn" data-view="dictionary" id="nav-dictionary">
+                        <span class="nav-icon">📖</span><span class="nav-label"> 用語辞書</span>
+                    </button>
+                    <button class="nav-btn" data-view="custom" id="nav-custom" style="display:none;">
+                        <span class="nav-icon">📝</span><span class="nav-label"> 用語追加</span>
+                    </button>
+                    <button class="nav-btn" data-view="users" id="nav-users" style="display:none;">
+                        <span class="nav-icon">👥</span><span class="nav-label"> ユーザー管理</span>
+                    </button>
+                </nav>
+                <div class="user-info">
+                    <span class="user-badge" id="user-badge"></span>
+                    <button class="btn btn-ghost" id="btn-logout" title="ログアウト">
+                        <span>🚪</span> ログアウト
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Translator View -->
+            <section class="view active" id="view-translator">
+                <div class="translator-grid">
+                    <!-- Input Panel -->
+                    <div class="panel input-panel">
+                        <div class="panel-header">
+                            <h2>📄 英語テキスト入力</h2>
+                            <div class="panel-actions">
+                                <button class="btn btn-ghost" id="btn-clear" title="テキストをクリア">
+                                    <span>✕</span> クリア
+                                </button>
+                                <button class="btn btn-ghost" id="btn-paste" title="クリップボードから貼り付け">
+                                    <span>📋</span> 貼り付け
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="input-text"
+                            placeholder="ここに英語の学術論文テキストを貼り付けてください...&#10;&#10;例: The balance of power in the international system has shifted significantly. States pursue their national interest through diplomacy and deterrence."></textarea>
+                        <div class="input-footer">
+                            <span class="word-count" id="word-count">0 words</span>
+                            <button class="btn btn-primary" id="btn-translate">
+                                <span>🔍</span> 用語を検出
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Output Panel -->
+                    <div class="panel output-panel">
+                        <div class="panel-header">
+                            <h2>🔍 翻訳結果</h2>
+                            <div class="panel-actions">
+                                <span class="detected-count" id="detected-count"></span>
+                            </div>
+                        </div>
+                        <div class="output-area" id="output-area">
+                            <div class="placeholder-message">
+                                <div class="placeholder-icon">📚</div>
+                                <p>左のテキストエリアに英語テキストを入力し、<br>「用語を検出」ボタンをクリックしてください。</p>
+                                <p class="placeholder-sub">専門用語がハイライト表示され、<br>ホバーで和訳・解説・<strong>参照先</strong>が表示されます。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detected Terms Summary -->
+                <div class="terms-summary" id="terms-summary" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>📋 検出された用語一覧</h2>
+                            <button class="btn btn-ghost" id="btn-collapse-terms"><span
+                                    id="collapse-icon">▼</span></button>
+                        </div>
+                        <div class="terms-grid" id="terms-grid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dictionary View -->
+            <section class="view" id="view-dictionary">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>📖 国際政治学用語辞書</h2>
+                        <div class="panel-actions">
+                            <span class="dict-count" id="dict-total-count"></span>
+                        </div>
+                    </div>
+                    <div class="dict-controls">
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="dict-search" placeholder="用語を検索（英語 / 日本語）...">
+                            <button class="search-clear" id="dict-search-clear" style="display:none;">✕</button>
+                        </div>
+                        <div class="category-filters" id="category-filters"></div>
+                    </div>
+                    <div class="dict-table-wrap">
+                        <table class="dict-table" id="dict-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-en">英語</th>
+                                    <th class="col-ja">日本語</th>
+                                    <th class="col-cat">カテゴリ</th>
+                                    <th class="col-note">解説</th>
+                                    <th class="col-ref">参照先</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dict-tbody"></tbody>
+                        </table>
+                        <div class="dict-empty" id="dict-empty" style="display:none;">
+                            <p>該当する用語が見つかりません</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Custom Dictionary View (admin only) -->
+            <section class="view" id="view-custom">
+                <div class="custom-grid">
+                    <!-- Add Term Form -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>📝 用語を追加</h2>
+                        </div>
+                        <form class="add-term-form" id="add-term-form">
+                            <div class="form-group">
+                                <label for="custom-en">英語 <span class="required">*</span></label>
+                                <input type="text" id="custom-en" placeholder="例: balance of threat" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="custom-ja">日本語訳 <span class="required">*</span></label>
+                                <input type="text" id="custom-ja" placeholder="例: 脅威の均衡（自動候補が表示されます）" required>
+                                <div class="translation-suggestions" id="translation-suggestions" style="display:none;">
+                                    <div class="suggestions-header">
+                                        <span class="suggestions-label">🤖 翻訳候補</span>
+                                        <span class="suggestions-loading" id="suggestions-loading"
+                                            style="display:none;">
+                                            <span class="spinner"></span> 取得中...
+                                        </span>
+                                    </div>
+                                    <div class="suggestions-list" id="suggestions-list"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="custom-category">カテゴリ</label>
+                                <select id="custom-category">
+                                    <option value="custom">ユーザー辞書</option>
+                                    <option value="security">安全保障</option>
+                                    <option value="theory">国際関係理論</option>
+                                    <option value="diplomacy">外交</option>
+                                    <option value="law">国際法・制度</option>
+                                    <option value="economy">国際政治経済</option>
+                                    <option value="conflict">紛争・平和</option>
+                                    <option value="actors">国際アクター</option>
+                                    <option value="concepts">基本概念</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="custom-note">解説（任意）</label>
+                                <textarea id="custom-note" placeholder="例: ウォルトの同盟理論における概念" rows="2"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="custom-reference">参照先（任意）</label>
+                                <input type="text" id="custom-reference"
+                                    placeholder="例: Walt, S. (1987) The Origins of Alliances">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <span>＋</span> 用語を追加
+                            </button>
+                        </form>
+
+                        <!-- Bulk Import -->
+                        <div class="bulk-import">
+                            <div class="bulk-header" id="bulk-toggle">
+                                <h3>📥 一括インポート</h3>
+                                <span class="toggle-icon" id="bulk-toggle-icon">▶</span>
+                            </div>
+                            <div class="bulk-body" id="bulk-body" style="display:none;">
+                                <p class="bulk-desc">CSVまたはTSV形式で一括インポート。<br>
+                                    <code>英語, 日本語, カテゴリ, 解説, 参照先</code> の順に1行1用語。
+                                </p>
+                                <textarea id="bulk-input" rows="6"
+                                    placeholder="balance of threat, 脅威の均衡, security, ウォルトの同盟理論, Walt (1987)"></textarea>
+                                <button class="btn btn-secondary btn-full" id="btn-bulk-import">
+                                    <span>📥</span> インポート
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Terms List -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>📝 追加済み用語</h2>
+                            <div class="panel-actions">
+                                <span class="dict-count" id="custom-count">0 語</span>
+                                <button class="btn btn-ghost" id="btn-export-custom" title="エクスポート">
+                                    <span>📤</span> エクスポート
+                                </button>
+                            </div>
+                        </div>
+                        <div class="custom-terms-list" id="custom-terms-list">
+                            <div class="placeholder-message">
+                                <div class="placeholder-icon">📝</div>
+                                <p>追加された用語はありません。</p>
+                                <p class="placeholder-sub">左のフォームから用語を追加してください。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Management View (admin only) -->
+            <section class="view" id="view-users">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>👥 ユーザー管理</h2>
+                        <div class="panel-actions">
+                            <button class="btn btn-ghost" id="btn-refresh-users" title="更新">
+                                <span>🔄</span> 更新
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pending Users Section -->
+                    <div class="users-section" id="pending-users-section">
+                        <h3 class="users-section-title">
+                            <span class="section-icon">⏳</span> 承認待ちユーザー
+                            <span class="pending-badge" id="pending-count-badge">0</span>
+                        </h3>
+                        <div id="pending-users-list" class="users-list"></div>
+                    </div>
+
+                    <!-- All Users Section -->
+                    <div class="users-section">
+                        <h3 class="users-section-title">
+                            <span class="section-icon">📋</span> 全ユーザー一覧
+                        </h3>
+                        <div class="users-table-wrap">
+                            <table class="users-table" id="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>ユーザー名</th>
+                                        <th>表示名</th>
+                                        <th>メール</th>
+                                        <th>ロール</th>
+                                        <th>ステータス</th>
+                                        <th>登録日</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip" style="display:none;">
+        <div class="tooltip-header">
+            <span class="tooltip-en" id="tooltip-en"></span>
+            <span class="tooltip-cat" id="tooltip-cat"></span>
+        </div>
+        <div class="tooltip-ja" id="tooltip-ja"></div>
+        <div class="tooltip-note" id="tooltip-note"></div>
+        <div class="tooltip-ref" id="tooltip-ref" style="display:none;">
+            <span class="tooltip-ref-label">📚 参照:</span>
+            <span class="tooltip-ref-text" id="tooltip-ref-text"></span>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Load dictionary data then app -->
+    <script src="dictionary.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

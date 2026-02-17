@@ -1,0 +1,10 @@
+node_modules/
+.env
+data/users.json
+data/terms.json
+
+# Old root-level files (pre-server version)
+/app.js
+/index.html
+/style.css
+/dictionary.js
