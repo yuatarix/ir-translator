@@ -17,27 +17,43 @@ const path = require('path');
 // Email Transporter (SMTP)
 // ============================================================
 let mailTransporter = null;
+
 if (process.env.SMTP_HOST) {
-    const smtpConfig = {
-        host: process.env.SMTP_HOST || 'smtp.googlemail.com', // Try googlemail
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-        },
-        // Render/Gmail specific settings
-        family: 4, // Force IPv4 to avoid IPv6 timeout issues
-        logger: true, // Enable logging
-        debug: true, // Show debug output
-        connectionTimeout: 30000, // 30s connection timeout
-        socketTimeout: 30000, // 30s socket timeout
-    };
+    const isGmail = process.env.SMTP_HOST.includes('gmail') || process.env.SMTP_HOST.includes('googlemail');
 
-    mailTransporter = nodemailer.createTransport(smtpConfig);
+    let transportConfig;
+    if (isGmail) {
+        transportConfig = {
+            service: 'Gmail',
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            },
+            family: 4, // Force IPv4
+            logger: true,
+            debug: true,
+        };
+        console.log('  📧 Using Gmail Service Preset');
+    } else {
+        transportConfig = {
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT || '587'),
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            },
+            family: 4,
+            logger: true,
+            debug: true,
+            connectionTimeout: 30000,
+            socketTimeout: 30000,
+        };
+        console.log(`  🔧 Custom SMTP Config: Host=${transportConfig.host}, Port=${transportConfig.port}`);
+    }
 
+    mailTransporter = nodemailer.createTransport(transportConfig);
     console.log('  📧 Email notifications enabled');
-    console.log(`  🔧 SMTP Config: Host=${smtpConfig.host}, Port=${smtpConfig.port}, Secure=${smtpConfig.secure}, User=${smtpConfig.auth.user}`);
 } else {
     console.log('  📧 Email notifications disabled (no SMTP_HOST in .env)');
 }
