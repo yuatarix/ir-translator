@@ -460,13 +460,28 @@ app.get('*', (req, res) => {
 // ============================================================
 // Start
 // ============================================================
-console.log('🔄 Starting server initialization...');
+console.log('🔄 Server process starting...');
+console.log(`  🕒 Time: ${new Date().toISOString()}`);
+console.log(`  🔧 PORT: ${PORT}`);
+console.log(`  🔧 Node Version: ${process.version}`);
+
+// Global error handlers
+process.on('uncaughtException', (err) => {
+    console.error('❌ UNCAUGHT EXCEPTION:', err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ UNHANDLED REJECTION:', reason);
+    process.exit(1);
+});
 
 ensureAdminExists()
     .then(() => {
         console.log('✅ Admin check complete. Starting Express server...');
-        app.listen(PORT, () => {
-            console.log(`\n  🌐 IR Translator server running at http://localhost:${PORT}`);
+        // Explicitly bind to 0.0.0.0 for Render
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`\n  🌐 IR Translator server running at http://0.0.0.0:${PORT}`);
             console.log(`  📁 Data directory: ${path.join(__dirname, 'data')}`);
             console.log(`  🔑 Default admin: admin / ${process.env.ADMIN_PASSWORD || 'admin123'}\n`);
         });
