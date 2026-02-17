@@ -18,8 +18,8 @@ const path = require('path');
 // ============================================================
 let mailTransporter = null;
 if (process.env.SMTP_HOST) {
-    mailTransporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
+    const smtpConfig = {
+        host: process.env.SMTP_HOST || 'smtp.googlemail.com', // Try googlemail
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: process.env.SMTP_SECURE === 'true',
         auth: {
@@ -30,10 +30,14 @@ if (process.env.SMTP_HOST) {
         family: 4, // Force IPv4 to avoid IPv6 timeout issues
         logger: true, // Enable logging
         debug: true, // Show debug output
-        connectionTimeout: 10000, // 10s connection timeout
-        socketTimeout: 10000, // 10s socket timeout
-    });
-    console.log('  📧 Email notifications enabled via', process.env.SMTP_HOST);
+        connectionTimeout: 30000, // 30s connection timeout
+        socketTimeout: 30000, // 30s socket timeout
+    };
+
+    mailTransporter = nodemailer.createTransport(smtpConfig);
+
+    console.log('  📧 Email notifications enabled');
+    console.log(`  🔧 SMTP Config: Host=${smtpConfig.host}, Port=${smtpConfig.port}, Secure=${smtpConfig.secure}, User=${smtpConfig.auth.user}`);
 } else {
     console.log('  📧 Email notifications disabled (no SMTP_HOST in .env)');
 }
