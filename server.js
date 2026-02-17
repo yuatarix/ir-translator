@@ -460,10 +460,18 @@ app.get('*', (req, res) => {
 // ============================================================
 // Start
 // ============================================================
-ensureAdminExists().then(() => {
-    app.listen(PORT, () => {
-        console.log(`\n  🌐 IR Translator server running at http://localhost:${PORT}`);
-        console.log(`  📁 Data directory: ${path.join(__dirname, 'data')}`);
-        console.log(`  🔑 Default admin: admin / ${process.env.ADMIN_PASSWORD || 'admin123'}\n`);
+console.log('🔄 Starting server initialization...');
+
+ensureAdminExists()
+    .then(() => {
+        console.log('✅ Admin check complete. Starting Express server...');
+        app.listen(PORT, () => {
+            console.log(`\n  🌐 IR Translator server running at http://localhost:${PORT}`);
+            console.log(`  📁 Data directory: ${path.join(__dirname, 'data')}`);
+            console.log(`  🔑 Default admin: admin / ${process.env.ADMIN_PASSWORD || 'admin123'}\n`);
+        });
+    })
+    .catch(err => {
+        console.error('❌ FATAL ERROR during server startup:', err);
+        process.exit(1);
     });
-});
