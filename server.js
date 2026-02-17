@@ -334,8 +334,8 @@ app.put('/api/admin/users/:username/approve', authenticate, requireAdmin, async 
     user.approvedBy = req.user.username;
     writeJSON(USERS_PATH, users);
 
-    // Send approval email notification
-    await sendApprovalEmail(user);
+    // Send approval email notification (fire and forget)
+    sendApprovalEmail(user).catch(err => console.error('Email error:', err));
 
     res.json({ message: `${user.displayName}を承認しました`, username: user.username, status: 'approved' });
 });
@@ -353,8 +353,8 @@ app.put('/api/admin/users/:username/reject', authenticate, requireAdmin, async (
     user.rejectedBy = req.user.username;
     writeJSON(USERS_PATH, users);
 
-    // Send rejection email notification
-    await sendRejectionEmail(user);
+    // Send rejection email notification (fire and forget)
+    sendRejectionEmail(user).catch(err => console.error('Email error:', err));
 
     res.json({ message: `${user.displayName}を拒否しました`, username: user.username, status: 'rejected' });
 });
